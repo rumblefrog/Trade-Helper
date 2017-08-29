@@ -85,6 +85,8 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_offer", CmdTrade, "Opens a trading menu for that target");
 	
 	RegConsoleCmd("sm_tradelink", CmdTradeLink, "Set/update your trade URL");
+	
+	RegAdminCmd("sm_resettrade", CmdResetTrade, ADMFLAG_GENERIC, "Reset trade offer URL for that target");
 }
 
 public void OnTimeoutChanged(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -96,7 +98,7 @@ public Action CmdTrade(int iClient, int iArgs)
 {
 	if (iArgs < 1)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing target name.");
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing target.");
 		return Plugin_Handled;
 	}
 	
@@ -265,7 +267,7 @@ public Action CmdTradeLink(int iClient, int iArgs)
 		
 		hDB.Escape(TOU, Escaped_TOU, sizeof Escaped_TOU);
 		
-		Format(sQuery, sizeof sQuery, "INSERT INTO `trade_helper` ON DUPLICATE KEY UPDATE `url` = '%s' WHERE `steamid` = '%s'", Escaped_TOU, sSteamID);
+		Format(sQuery, sizeof sQuery, "INSERT INTO `trade_helper` ON DUPLICATE KEY UPDATE `url` = '%s'", Escaped_TOU);
 		
 		hDB.Query(OnDataUpdated, sQuery, iClient);
 	} else
@@ -274,8 +276,65 @@ public Action CmdTradeLink(int iClient, int iArgs)
 	return Plugin_Handled;
 }
 
+public Action CmdResetTrade(int iClient, int iArgs)
+{
+	if (iArgs < 1)
+	{
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing target.");
+		return Plugin_Handled;
+	}
+	
+	char sBuffer[64], sTargetName[MAX_TARGET_LENGTH];
+	int iTargets[MAXPLAYERS];
+	bool bML;
+	
+	GetCmdArgString(sBuffer, sizeof sBuffer);
+	
+	int iTargetCount = ProcessTargetString(sBuffer, iClient, iTargets, sizeof iTargets, COMMAND_FILTER_NO_IMMUNITY | COMMAND_FILTER_NO_BOTS, sTargetName, sizeof sTargetName, bML);
+	
+	if (iTargetCount <= 0)
+	{
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}No matching client.");
+		return Plugin_Handled;
+	}
+	
+	if (iTargetCount >= 2)
+	{
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}More than one client matched.");
+		return Plugin_Handled;
+	}
+	
+	char sSteamID[32], Update_Query[512];
+	
+	GetClientAuthId(iTargets[0], AuthId_Steam2, sSteamID, sizeof sSteamID);
+	
+	Format(Update_Query, sizeof Update_Query, "UPDATE `trade_helper` SET `url` = NULL WHERE `steamid` = '%s'", sSteamID);
+	
+	DataPack pData = new DataPack();
+	
+	pData.WriteCell(iClient);
+	pData.WriteCell(iTargets[0]);
+	
+	hDB.Query(OnDataReset, Update_Query, iTargets[0]);
+	
+	return Plugin_Handled;
+}
+
 public void OnDataUpdated(Database db, DBResultSet results, const char[] error, int iClient)
 {
 	if (results != null)
 		CPrintToChat(iClient, "{lightseagreen}[Trade] {grey}Updated your trade offer URL.");
+}
+
+public void OnDataReset(Database db, DBResultSet results, const char[] error, DataPack pData)
+{
+	if (results != null)
+	{
+		pData.Reset();
+		
+		int iClient = pData.ReadCell();
+		int iTarget = pData.ReadCell();
+		
+		CPrintToChat(iClient, "{lightseagreen}[Trade] {grey}Reset trade offer URL for %N.", iTarget);
+	}
 }
