@@ -16,6 +16,8 @@ int AppID;
 
 char Client_Target_URL[MAXPLAYERS + 1][255];
 
+Regex TOU_Pattern;
+
 public Plugin myinfo = 
 {
 	name = "Trade Helper",
@@ -61,6 +63,14 @@ public void OnPluginStart()
 		case Engine_CSGO: AppID = 730;
 		case Engine_TF2: AppID = 440;
 	}
+	
+	RegexError CompileError;
+	char RegexErr[255];
+	
+	TOU_Pattern = new Regex("steamcommunity\\.com\\/tradeoffer\\/new\\/\\?partner=[0-9]*&token=[a-zA-Z0-9_-]*", PCRE_CASELESS, RegexErr, sizeof RegexErr, CompileError);
+	
+	if (CompileError != REGEX_ERROR_NONE)
+		SetFailState("Failed to compile regex: %s", RegexErr);
 	
 	LoadTranslations("common.phrases");
 	
@@ -163,15 +173,29 @@ public int mTrade_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 				Format(sURL, sizeof sURL, "https://steamcommunity.com/profiles/%s/inventory#%i", sSteamID64, AppID);
 			else 
 				Format(sURL, sizeof sURL, "https://steamcommunity.com/profiles/%s/inventory", sSteamID64);
+				
+			WebLync_OpenUrl(iClient, sURL);
+			
+			return;
 		}
 		
 		if (StrEqual(sBuffer, "sr"))
+		{
 			Format(sURL, sizeof sURL, "https://steamrep.com/profiles/%s", sSteamID64);
 			
+			WebLync_OpenUrl(iClient, sURL);
+			
+			return;
+		}
+			
 		if (StrEqual(sBuffer, "trade"))
+		{
 			Format(sURL, sizeof sURL, "%s", Client_Target_URL);
 			
-		WebLync_OpenUrl(iClient, sURL);
+			//TODO: Timer
+
+			return;
+		}
 	}
 	else if (action == MenuAction_End)
 		delete menu;
