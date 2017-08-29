@@ -38,7 +38,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	if (hDB == INVALID_HANDLE)
 		return APLRes_Failure;
 	
-	char TableCreateSQL[] = "CREATE TABLE IF NOT EXISTS `trade_helper` ( `id` INT NOT NULL AUTO_INCREMENT , `steamid` VARCHAR(16) NOT NULL , `url` VARCHAR(255) NOT NULL , `created_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), UNIQUE (`steamid`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;";
+	char TableCreateSQL[] = "CREATE TABLE IF NOT EXISTS `trade_helper` ( `id` INT NOT NULL AUTO_INCREMENT , `steamid` VARCHAR(32) NOT NULL , `url` VARCHAR(255) NOT NULL , `created_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), UNIQUE (`steamid`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;";
 	
 	SQL_SetCharset(hDB, "utf8mb4");
 			
@@ -216,7 +216,7 @@ public int mTrade_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 			pData.WriteCell(iClient);
 			pData.WriteString(Client_Target_URL[iClient]);
 			
-			CPrintToChat(iTarget, "{lightseagreen}[Trade] {grey}Opening trade in %.1f", fTimeout);
+			CPrintToChat(iTarget, "{lightseagreen}[Trade] {grey}Opening trade in %.1f second", fTimeout);
 			
 			CreateTimer(fTimeout, TradeTimeout, pData);
 
@@ -269,7 +269,7 @@ public Action CmdTradeLink(int iClient, int iArgs)
 		
 		hDB.Escape(TOU, Escaped_TOU, sizeof Escaped_TOU);
 		
-		Format(sQuery, sizeof sQuery, "INSERT INTO `trade_helper` ON DUPLICATE KEY UPDATE `url` = '%s'", Escaped_TOU);
+		Format(sQuery, sizeof sQuery, "INSERT INTO `trade_helper` (`steamid`, `url`) VALUES ('%s', '%s') ON DUPLICATE KEY UPDATE `url` = 'https://%s'", sSteamID, Escaped_TOU, Escaped_TOU);
 		
 		hDB.Query(OnDataUpdated, sQuery, iClient);
 	} else
@@ -327,7 +327,7 @@ public void OnDataUpdated(Database db, DBResultSet results, const char[] error, 
 	if (results != null)
 		CPrintToChat(iClient, "{lightseagreen}[Trade] {grey}Updated your trade offer URL.");
 	else
-		LogError("[Trade] Failed to update data: %s", error);
+		LogError("Failed to update data: %s", error);
 }
 
 public void OnDataReset(Database db, DBResultSet results, const char[] error, DataPack pData)
@@ -341,5 +341,5 @@ public void OnDataReset(Database db, DBResultSet results, const char[] error, Da
 		
 		CPrintToChat(iClient, "{lightseagreen}[Trade] {grey}Reset trade offer URL for %N.", iTarget);
 	} else
-		LogError("[Trade] Failed to reset data: %s", error);
+		LogError("Failed to reset data: %s", error);
 }
