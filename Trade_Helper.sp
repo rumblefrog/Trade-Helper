@@ -57,11 +57,11 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_offer", CmdTrade, "Opens a trading menu for that target");
 }
 
-public Action CmdTrade(int client, int args)
+public Action CmdTrade(int iClient, int args)
 {
 	if (args < 1)
 	{
-		ReplyToCommand(client, "{lightseagreen}[Trade] {grey}%t", "No matching client");
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}%t", "No matching client");
 		return Plugin_Handled;
 	}
 	
@@ -71,17 +71,17 @@ public Action CmdTrade(int client, int args)
 	
 	GetCmdArgString(sBuffer, sizeof sBuffer);
 	
-	int iTargetCount = ProcessTargetString(sBuffer, client, iTargets, sizeof iTargets, COMMAND_FILTER_NO_IMMUNITY | COMMAND_FILTER_NO_BOTS, sTargetName, sizeof sTargetName, bML);
+	int iTargetCount = ProcessTargetString(sBuffer, iClient, iTargets, sizeof iTargets, COMMAND_FILTER_NO_IMMUNITY | COMMAND_FILTER_NO_BOTS, sTargetName, sizeof sTargetName, bML);
 	
 	if (iTargetCount <= 0)
 	{
-		ReplyToCommand(client, "{lightseagreen}[Trade] {grey}%t", "No matching client");
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}%t", "No matching client");
 		return Plugin_Handled;
 	}
 	
 	if (iTargetCount >= 2)
 	{
-		ReplyToCommand(client, "{lightseagreen}[Trade] {grey}%t", "More than one client matched");
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}%t", "More than one client matched");
 		return Plugin_Handled;
 	}
 	
@@ -91,12 +91,20 @@ public Action CmdTrade(int client, int args)
 	
 	Format(Select_Query, sizeof Select_Query, "SELECT `url` FROM trade_helper WHERE `steamid` = '%s'", sSteamID);
 	
-	hDB.Query(OnDataFetched, Select_Query, client);
+	DataPack pData = new DataPack();
+	
+	pData.WriteCell(iClient);
+	pData.WriteCell(iTargets[0]);
+	
+	hDB.Query(OnDataFetched, Select_Query, pData);
 	
 	return Plugin_Handled;
 }
 
-public void OnDataFetched(Database db, DBResultSet results, const char[] error, any pData)
+public void OnDataFetched(Database db, DBResultSet results, const char[] error, DataPack pData)
 {
-
+	pData.Reset();
+	
+	int iClient = pData.ReadCell();
+	int iTarget = pData.ReadCell();
 }
