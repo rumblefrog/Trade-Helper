@@ -62,7 +62,7 @@ public void OnPluginStart()
 {
 	CreateConVar("sm_trade_helper_version", PLUGIN_VERSION, "Trade Helper Version", FCVAR_REPLICATED | FCVAR_SPONLY | FCVAR_DONTRECORD | FCVAR_NOTIFY);
 	
-	cTimeout = CreateConVar("sm_trade_helper_timeout", "3.0", "Enable blocked logging", FCVAR_NONE, true, 0.0);
+	cTimeout = CreateConVar("sm_trade_helper_timeout", "5.0", "Enable blocked logging", FCVAR_NONE, true, 0.0);
 	
 	fTimeout = cTimeout.FloatValue;
 	cTimeout.AddChangeHook(OnTimeoutChanged);
@@ -216,7 +216,7 @@ public int mTrade_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 			pData.WriteCell(iClient);
 			pData.WriteString(Client_Target_URL[iClient]);
 			
-			CPrintToChat(iTarget, "{lightseagreen}[Trade] {grey}Opening trade in %.1f second", fTimeout);
+			CPrintToChat(iTarget, "{lightseagreen}[Trade] {grey}Opening trade offer in %.1f second(s).", fTimeout);
 			
 			CreateTimer(fTimeout, TradeTimeout, pData);
 
