@@ -1,22 +1,20 @@
 #pragma semicolon 1
 
-#define DEBUG
-
-#define PLUGIN_AUTHOR ""
-#define PLUGIN_VERSION "0.00"
+#define PLUGIN_AUTHOR "RumbleFrog"
+#define PLUGIN_VERSION "0.0.1"
 
 #include <sourcemod>
-#include <sdktools>
+#include <weblync>
 
 #pragma newdecls required
 
 public Plugin myinfo = 
 {
-	name = "",
+	name = "Trade Helper",
 	author = PLUGIN_AUTHOR,
-	description = "",
+	description = "Making your trading experience smoother",
 	version = PLUGIN_VERSION,
-	url = ""
+	url = "https://keybase.io/rumblefrog"
 };
 
 public void OnPluginStart()
