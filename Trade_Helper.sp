@@ -11,6 +11,10 @@
 
 Database hDB;
 
+int Client_Target[MAXPLAYERS + 1];
+
+char Client_Target_URL[MAXPLAYERS + 1][255];
+
 public Plugin myinfo = 
 {
 	name = "Trade Helper",
@@ -107,4 +111,29 @@ public void OnDataFetched(Database db, DBResultSet results, const char[] error, 
 	
 	int iClient = pData.ReadCell();
 	int iTarget = pData.ReadCell();
+	
+	Client_Target[iClient] = iTarget;
+	
+	char Target_Name[MAX_NAME_LENGTH], Target_SteamID[21], Target_String[MAX_NAME_LENGTH + 21];
+	
+	GetClientName(iTarget, Target_Name, sizeof Target_Name);
+	GetClientAuthId(iTarget, AuthId_Steam2, Target_SteamID, sizeof Target_SteamID);
+	Format(Target_String, sizeof Target_String, "%s (%s)", Target_Name, Target_SteamID);
+	
+	Menu mTrade = new Menu();
+	
+	mTrade.SetTitle(Target_String);
+	
+	mTrade.AddItem("inv", "View Inventory");
+	mTrade.AddItem("sr", "View SteamRep");
+	
+	if (results != null && results.RowCount >= 1)
+	{
+		mTrade.AddItem("trade", "Open Trade Offer");
+		
+		results.FetchRow();
+		results.FetchString(0, Client_Target_URL[iClient], sizeof Client_Target_URL[]);
+	}
+	
+	mTrade.Display(iClient, MENU_TIME_FOREVER);
 }
