@@ -164,13 +164,13 @@ public void OnDataFetched(Database db, DBResultSet results, const char[] error, 
 	{	
 		results.FetchRow();
 		
-		//if (!results.IsFieldNull(0))
-		//{
+		if (!results.IsFieldNull(0))
+		{
 			results.FetchString(0, Client_Target_URL[iClient], sizeof Client_Target_URL[]);
 			
 			if (!StrEqual(Client_Target_URL[iClient], ""))
 				mTrade.AddItem("trade", "Open Trade Offer");
-		//}
+		}
 	}
 	
 	mTrade.Display(iClient, MENU_TIME_FOREVER);
