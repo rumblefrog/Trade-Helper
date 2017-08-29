@@ -5,6 +5,7 @@
 
 #include <sourcemod>
 #include <weblync>
+#include <morecolors>
 
 #pragma newdecls required
 
@@ -49,4 +50,55 @@ public void OnTableCreate(Database db, DBResultSet results, const char[] error, 
 public void OnPluginStart()
 {
 	CreateConVar("sm_trade_helper_version", PLUGIN_VERSION, "Trade Helper Version", FCVAR_REPLICATED | FCVAR_SPONLY | FCVAR_DONTRECORD | FCVAR_NOTIFY);
+	
+	LoadTranslations("common.phrases");
+	
+	RegConsoleCmd("sm_trade", CmdTrade, "Opens a trading menu for that target");
+	RegConsoleCmd("sm_offer", CmdTrade, "Opens a trading menu for that target");
+}
+
+public Action CmdTrade(int client, int args)
+{
+	if (args < 1)
+	{
+		ReplyToCommand(client, "{lightseagreen}[Trade] {grey}%t", "No matching client");
+		return Plugin_Handled;
+	}
+	
+	char sBuffer[32], sTargetName[MAX_TARGET_LENGTH];
+	int iTargets[MAXPLAYERS];
+	bool bML;
+	
+	GetCmdArgString(sBuffer, sizeof sBuffer);
+	
+	int iTargetCount = ProcessTargetString(sBuffer, client, iTargets, sizeof iTargets, COMMAND_FILTER_NO_IMMUNITY | COMMAND_FILTER_NO_BOTS, sTargetName, sizeof sTargetName, bML);
+	
+	if (iTargetCount <= 0)
+	{
+		ReplyToCommand(client, "{lightseagreen}[Trade] {grey}%t", "No matching client");
+		return Plugin_Handled;
+	}
+	
+	if (iTargetCount >= 2)
+	{
+		ReplyToCommand(client, "{lightseagreen}[Trade] {grey}%t", "More than one client matched");
+		return Plugin_Handled;
+	}
+	
+	int iTarget = iTargets[0];
+	
+	char sSteamID[32], Select_Query[512];
+	
+	GetClientAuthId(iTarget, AuthId_Steam2, sSteamID, sizeof sSteamID);
+	
+	Format(Select_Query, sizeof Select_Query, "SELECT `url` FROM trade_helper WHERE `steamid` = '%s'", sSteamID);
+	
+	hDB.Query(OnDataFetched, Select_Query, client);
+	
+	return Plugin_Handled;
+}
+
+public void OnDataFetched(Database db, DBResultSet results, const char[] error, any pData)
+{
+
 }
