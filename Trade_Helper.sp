@@ -12,6 +12,7 @@
 Database hDB;
 
 int Client_Target[MAXPLAYERS + 1];
+int AppID;
 
 char Client_Target_URL[MAXPLAYERS + 1][255];
 
@@ -54,6 +55,12 @@ public void OnTableCreate(Database db, DBResultSet results, const char[] error, 
 public void OnPluginStart()
 {
 	CreateConVar("sm_trade_helper_version", PLUGIN_VERSION, "Trade Helper Version", FCVAR_REPLICATED | FCVAR_SPONLY | FCVAR_DONTRECORD | FCVAR_NOTIFY);
+	
+	switch (GetEngineVersion())
+	{
+		case Engine_CSGO: AppID = 730;
+		case Engine_TF2: AppID = 440;
+	}
 	
 	LoadTranslations("common.phrases");
 	
@@ -114,7 +121,7 @@ public void OnDataFetched(Database db, DBResultSet results, const char[] error, 
 	
 	Client_Target[iClient] = iTarget;
 	
-	char Target_Name[MAX_NAME_LENGTH], Target_SteamID[21], Target_String[MAX_NAME_LENGTH + 21];
+	char Target_Name[MAX_NAME_LENGTH], Target_SteamID[32], Target_String[MAX_NAME_LENGTH + 32];
 	
 	GetClientName(iTarget, Target_Name, sizeof Target_Name);
 	GetClientAuthId(iTarget, AuthId_Steam2, Target_SteamID, sizeof Target_SteamID);
@@ -138,7 +145,30 @@ public void OnDataFetched(Database db, DBResultSet results, const char[] error, 
 	mTrade.Display(iClient, MENU_TIME_FOREVER);
 }
 
-public int mTrade_Handler(Menu menu, MenuAction action, int client, int item)
+public int mTrade_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 {
-	
+	if (action == MenuAction_Select)
+	{
+		char sBuffer[32], sSteamID64[32], sURL[255];
+		
+		int iTarget = Client_Target[iClient];
+		
+		GetClientAuthId(iTarget, AuthId_SteamID64, sSteamID64, sizeof sSteamID64);
+		
+		menu.GetItem(iItem, sBuffer, sizeof sBuffer);
+		
+		if (StrEqual(sBuffer, "inv"))
+		{	
+			if (AppID != 0)
+				Format(sURL, sizeof sURL, "https://steamcommunity.com/profiles/%s/inventory#%i", sSteamID64, AppID);
+			else 
+				Format(sURL, sizeof sURL, "https://steamcommunity.com/profiles/%s/inventory", sSteamID64);
+				
+			WebLync_OpenUrl(iClient, sURL);
+			
+			return;
+		}
+	}
+	else if (action == MenuAction_End)
+		delete menu;
 }
