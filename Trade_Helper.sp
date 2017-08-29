@@ -11,8 +11,12 @@
 
 Database hDB;
 
+ConVar cTimeout;
+
 int Client_Target[MAXPLAYERS + 1];
 int AppID;
+
+float fTimeout;
 
 char Client_Target_URL[MAXPLAYERS + 1][255];
 
@@ -58,6 +62,11 @@ public void OnPluginStart()
 {
 	CreateConVar("sm_trade_helper_version", PLUGIN_VERSION, "Trade Helper Version", FCVAR_REPLICATED | FCVAR_SPONLY | FCVAR_DONTRECORD | FCVAR_NOTIFY);
 	
+	cTimeout = CreateConVar("sm_trade_helper_timeout", "3.0", "Enable blocked logging", FCVAR_NONE, true, 0.0);
+	
+	fTimeout = cTimeout.FloatValue;
+	cTimeout.AddChangeHook(OnTimeoutChanged);
+	
 	switch (GetEngineVersion())
 	{
 		case Engine_CSGO: AppID = 730;
@@ -72,21 +81,24 @@ public void OnPluginStart()
 	if (CompileError != REGEX_ERROR_NONE)
 		SetFailState("Failed to compile regex: %s", RegexErr);
 	
-	LoadTranslations("common.phrases");
-	
 	RegConsoleCmd("sm_trade", CmdTrade, "Opens a trading menu for that target");
 	RegConsoleCmd("sm_offer", CmdTrade, "Opens a trading menu for that target");
 }
 
-public Action CmdTrade(int iClient, int args)
+public void OnTimeoutChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (args < 1)
+	fTimeout = cTimeout.FloatValue;
+}
+
+public Action CmdTrade(int iClient, int iArgs)
+{
+	if (iArgs < 1)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}%t", "No matching client");
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing target name.");
 		return Plugin_Handled;
 	}
 	
-	char sBuffer[32], sTargetName[MAX_TARGET_LENGTH];
+	char sBuffer[64], sTargetName[MAX_TARGET_LENGTH];
 	int iTargets[MAXPLAYERS];
 	bool bML;
 	
@@ -96,13 +108,13 @@ public Action CmdTrade(int iClient, int args)
 	
 	if (iTargetCount <= 0)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}%t", "No matching client");
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}No matching client.");
 		return Plugin_Handled;
 	}
 	
 	if (iTargetCount >= 2)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}%t", "More than one client matched");
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}More than one client matched.");
 		return Plugin_Handled;
 	}
 	
@@ -189,14 +201,49 @@ public int mTrade_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 		}
 			
 		if (StrEqual(sBuffer, "trade"))
-		{
-			Format(sURL, sizeof sURL, "%s", Client_Target_URL);
+		{	
+			DataPack pData = new DataPack();
 			
-			//TODO: Timer
+			pData.WriteCell(iClient);
+			pData.WriteString(Client_Target_URL[iClient]);
+			
+			CPrintToChat(iTarget, "{lightseagreen}[Trade] {grey}Opening trade in %.1f", fTimeout);
+			
+			CreateTimer(fTimeout, TradeTimeout, pData);
 
 			return;
 		}
 	}
 	else if (action == MenuAction_End)
 		delete menu;
+}
+
+public Action TradeTimeout(Handle timer, DataPack pData)
+{
+	char sURL[255];
+	
+	pData.Reset();
+	
+	int iClient = pData.ReadCell();
+	pData.ReadString(sURL, sizeof sURL);
+	
+	WebLync_OpenUrl(iClient, sURL);
+}
+
+public Action CmdTradeLink(int iClient, int iArgs)
+{
+	if (iArgs < 1)
+	{
+		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing trade offer URL.");
+		return Plugin_Handled;
+	}
+	
+	char sBuffer[128];
+	
+	GetCmdArgString(sBuffer, sizeof sBuffer);
+	
+	if (StrEqual(sBuffer, "clear"))
+	{
+		
+	}
 }
