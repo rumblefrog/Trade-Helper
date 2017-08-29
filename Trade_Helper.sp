@@ -38,7 +38,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	if (hDB == INVALID_HANDLE)
 		return APLRes_Failure;
 	
-	char TableCreateSQL[] = "CREATE TABLE IF NOT EXISTS `trade_helper` ( `id` INT NOT NULL AUTO_INCREMENT , `steamid` VARCHAR(32) NOT NULL , `url` VARCHAR(255) NOT NULL , `created_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), UNIQUE (`steamid`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;";
+	char TableCreateSQL[] = "CREATE TABLE IF NOT EXISTS `trade_helper` ( `id` INT NOT NULL AUTO_INCREMENT , `steamid` VARCHAR(32) NOT NULL , `url` VARCHAR(255) NULL , `created_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), UNIQUE (`steamid`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;";
 	
 	SQL_SetCharset(hDB, "utf8mb4");
 			
@@ -317,7 +317,7 @@ public Action CmdResetTrade(int iClient, int iArgs)
 	pData.WriteCell(iClient);
 	pData.WriteCell(iTargets[0]);
 	
-	hDB.Query(OnDataReset, Update_Query, iTargets[0]);
+	hDB.Query(OnDataReset, Update_Query, pData);
 	
 	return Plugin_Handled;
 }
