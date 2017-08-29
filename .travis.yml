@@ -19,6 +19,7 @@ before_script:
     - tar -xzf $(basename "$SMPACKAGE")
     - cp Trade_Helper.sp addons/sourcemod/scripting/
     - cp include/weblync.inc addons/sourcemod/scripting/include
+    - cp include/morecolors.inc addons/sourcemod/scripting/include
     - cd addons/sourcemod/scripting/
     - chmod +x spcomp
     - chmod +x compile.sh
