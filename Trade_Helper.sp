@@ -48,5 +48,5 @@ public void OnTableCreate(Database db, DBResultSet results, const char[] error, 
 
 public void OnPluginStart()
 {
-	
+	CreateConVar("sm_trade_helper_version", PLUGIN_VERSION, "Trade Helper Version", FCVAR_REPLICATED | FCVAR_SPONLY | FCVAR_DONTRECORD | FCVAR_NOTIFY);
 }
