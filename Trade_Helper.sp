@@ -120,7 +120,7 @@ public void OnDataFetched(Database db, DBResultSet results, const char[] error, 
 	GetClientAuthId(iTarget, AuthId_Steam2, Target_SteamID, sizeof Target_SteamID);
 	Format(Target_String, sizeof Target_String, "%s (%s)", Target_Name, Target_SteamID);
 	
-	Menu mTrade = new Menu();
+	Menu mTrade = new Menu(mTrade_Handler);
 	
 	mTrade.SetTitle(Target_String);
 	
@@ -136,4 +136,9 @@ public void OnDataFetched(Database db, DBResultSet results, const char[] error, 
 	}
 	
 	mTrade.Display(iClient, MENU_TIME_FOREVER);
+}
+
+public int mTrade_Handler(Menu menu, MenuAction action, int client, int item)
+{
+	
 }
