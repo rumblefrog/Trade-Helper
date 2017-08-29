@@ -38,7 +38,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	if (hDB == INVALID_HANDLE)
 		return APLRes_Failure;
 	
-	char TableCreateSQL[] = "CREATE TABLE IF NOT EXISTS `trade_helper` ( `id` INT NOT NULL AUTO_INCREMENT , `steamid` VARCHAR(16) NOT NULL , `url` INT NOT NULL , `created_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), UNIQUE (`steamid`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;";
+	char TableCreateSQL[] = "CREATE TABLE IF NOT EXISTS `trade_helper` ( `id` INT NOT NULL AUTO_INCREMENT , `steamid` VARCHAR(16) NOT NULL , `url` VARCHAR(255) NOT NULL , `created_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), UNIQUE (`steamid`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;";
 	
 	SQL_SetCharset(hDB, "utf8mb4");
 			
@@ -83,6 +83,8 @@ public void OnPluginStart()
 	
 	RegConsoleCmd("sm_trade", CmdTrade, "Opens a trading menu for that target");
 	RegConsoleCmd("sm_offer", CmdTrade, "Opens a trading menu for that target");
+	
+	RegConsoleCmd("sm_tradelink", CmdTradeLink, "Set/update your trade URL");
 }
 
 public void OnTimeoutChanged(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -157,11 +159,16 @@ public void OnDataFetched(Database db, DBResultSet results, const char[] error, 
 	mTrade.AddItem("sr", "View SteamRep");
 	
 	if (results != null && results.RowCount >= 1)
-	{
-		mTrade.AddItem("trade", "Open Trade Offer");
-		
+	{	
 		results.FetchRow();
-		results.FetchString(0, Client_Target_URL[iClient], sizeof Client_Target_URL[]);
+		
+		//if (!results.IsFieldNull(0))
+		//{
+			results.FetchString(0, Client_Target_URL[iClient], sizeof Client_Target_URL[]);
+			
+			if (!StrEqual(Client_Target_URL[iClient], ""))
+				mTrade.AddItem("trade", "Open Trade Offer");
+		//}
 	}
 	
 	mTrade.Display(iClient, MENU_TIME_FOREVER);
@@ -238,12 +245,37 @@ public Action CmdTradeLink(int iClient, int iArgs)
 		return Plugin_Handled;
 	}
 	
-	char sBuffer[128];
+	char sBuffer[128], sSteamID[32], sQuery[512];
 	
 	GetCmdArgString(sBuffer, sizeof sBuffer);
+	GetClientAuthId(iClient, AuthId_Steam2, sSteamID, sizeof sSteamID);
 	
 	if (StrEqual(sBuffer, "clear"))
 	{
+		Format(sQuery, sizeof sQuery, "UPDATE `trade_helper` SET `url` = NULL WHERE `steamid` = '%s'", sSteamID);
 		
+		hDB.Query(OnDataUpdated, sQuery, iClient);
+		
+		return Plugin_Handled;
 	}
+	
+	if (TOU_Pattern.Match(sBuffer) > 0)
+	{
+		char TOU[128], Escaped_TOU[255];
+		
+		hDB.Escape(TOU, Escaped_TOU, sizeof Escaped_TOU);
+		
+		Format(sQuery, sizeof sQuery, "INSERT INTO `trade_helper` ON DUPLICATE KEY UPDATE `url` = '%s' WHERE `steamid` = '%s'", Escaped_TOU, sSteamID);
+		
+		hDB.Query(OnDataUpdated, sQuery, iClient);
+	} else
+		CPrintToChat(iClient, "{lightseagreen}[Trade] {grey}Invalid trade offer URL.");
+	
+	return Plugin_Handled;
+}
+
+public void OnDataUpdated(Database db, DBResultSet results, const char[] error, int iClient)
+{
+	if (results != null)
+		CPrintToChat(iClient, "{lightseagreen}[Trade] {grey}Updated your trade offer URL.");
 }
