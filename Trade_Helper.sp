@@ -326,6 +326,8 @@ public void OnDataUpdated(Database db, DBResultSet results, const char[] error, 
 {
 	if (results != null)
 		CPrintToChat(iClient, "{lightseagreen}[Trade] {grey}Updated your trade offer URL.");
+	else
+		LogError("[Trade] Failed to update data: %s", error);
 }
 
 public void OnDataReset(Database db, DBResultSet results, const char[] error, DataPack pData)
@@ -338,5 +340,6 @@ public void OnDataReset(Database db, DBResultSet results, const char[] error, Da
 		int iTarget = pData.ReadCell();
 		
 		CPrintToChat(iClient, "{lightseagreen}[Trade] {grey}Reset trade offer URL for %N.", iTarget);
-	}
+	} else
+		LogError("[Trade] Failed to reset data: %s", error);
 }
