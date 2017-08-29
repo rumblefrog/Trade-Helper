@@ -98,7 +98,7 @@ public Action CmdTrade(int iClient, int iArgs)
 {
 	if (iArgs < 1)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing target.");
+		CReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing target.");
 		return Plugin_Handled;
 	}
 	
@@ -112,13 +112,13 @@ public Action CmdTrade(int iClient, int iArgs)
 	
 	if (iTargetCount <= 0)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}No matching client.");
+		CReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}No matching client.");
 		return Plugin_Handled;
 	}
 	
 	if (iTargetCount >= 2)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}More than one client matched.");
+		CReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}More than one client matched.");
 		return Plugin_Handled;
 	}
 	
@@ -243,7 +243,7 @@ public Action CmdTradeLink(int iClient, int iArgs)
 {
 	if (iArgs < 1)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing trade offer URL.");
+		CReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing trade offer URL.");
 		return Plugin_Handled;
 	}
 	
@@ -265,6 +265,8 @@ public Action CmdTradeLink(int iClient, int iArgs)
 	{
 		char TOU[128], Escaped_TOU[255];
 		
+		TOU_Pattern.GetSubString(0, TOU, sizeof TOU);
+		
 		hDB.Escape(TOU, Escaped_TOU, sizeof Escaped_TOU);
 		
 		Format(sQuery, sizeof sQuery, "INSERT INTO `trade_helper` ON DUPLICATE KEY UPDATE `url` = '%s'", Escaped_TOU);
@@ -280,7 +282,7 @@ public Action CmdResetTrade(int iClient, int iArgs)
 {
 	if (iArgs < 1)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing target.");
+		CReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}Missing target.");
 		return Plugin_Handled;
 	}
 	
@@ -294,13 +296,13 @@ public Action CmdResetTrade(int iClient, int iArgs)
 	
 	if (iTargetCount <= 0)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}No matching client.");
+		CReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}No matching client.");
 		return Plugin_Handled;
 	}
 	
 	if (iTargetCount >= 2)
 	{
-		ReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}More than one client matched.");
+		CReplyToCommand(iClient, "{lightseagreen}[Trade] {grey}More than one client matched.");
 		return Plugin_Handled;
 	}
 	
