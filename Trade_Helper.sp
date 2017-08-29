@@ -85,11 +85,9 @@ public Action CmdTrade(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	int iTarget = iTargets[0];
-	
 	char sSteamID[32], Select_Query[512];
 	
-	GetClientAuthId(iTarget, AuthId_Steam2, sSteamID, sizeof sSteamID);
+	GetClientAuthId(iTargets[0], AuthId_Steam2, sSteamID, sizeof sSteamID);
 	
 	Format(Select_Query, sizeof Select_Query, "SELECT `url` FROM trade_helper WHERE `steamid` = '%s'", sSteamID);
 	
