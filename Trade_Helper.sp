@@ -12,6 +12,7 @@
 Database hDB;
 
 ConVar cTimeout;
+ConVar cMessage;
 
 int Client_Target[MAXPLAYERS + 1];
 int AppID;
@@ -19,6 +20,7 @@ int AppID;
 float fTimeout;
 
 char Client_Target_URL[MAXPLAYERS + 1][255];
+char Warning_Message[255];
 
 Regex TOU_Pattern;
 
@@ -63,9 +65,13 @@ public void OnPluginStart()
 	CreateConVar("sm_trade_helper_version", PLUGIN_VERSION, "Trade Helper Version", FCVAR_REPLICATED | FCVAR_SPONLY | FCVAR_DONTRECORD | FCVAR_NOTIFY);
 	
 	cTimeout = CreateConVar("sm_trade_helper_timeout", "5.0", "Enable blocked logging", FCVAR_NONE, true, 0.0);
+	cMessage = CreateConVar("sm_trade_helper_message", "Warning: Make sure that you check the persons name in the trade offer before you send your items. If the tradelink is incorrect, make sure to report it to an administrator or moderator.", "Warning Message", FCVAR_NONE);
 	
 	fTimeout = cTimeout.FloatValue;
-	cTimeout.AddChangeHook(OnTimeoutChanged);
+	cTimeout.AddChangeHook(OnConvarChanged);
+	
+	cMessage.GetString(Warning_Message, sizeof Warning_Message);
+	cMessage.AddChangeHook(OnConvarChanged);
 	
 	switch (GetEngineVersion())
 	{
@@ -89,9 +95,13 @@ public void OnPluginStart()
 	RegAdminCmd("sm_resettrade", CmdResetTrade, ADMFLAG_GENERIC, "Reset trade offer URL for that target");
 }
 
-public void OnTimeoutChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+public void OnConvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	fTimeout = cTimeout.FloatValue;
+	if (convar == cTimeout)
+		fTimeout = cTimeout.FloatValue;
+		
+	if (convar == cMessage)
+		cMessage.GetString(Warning_Message, sizeof Warning_Message);
 }
 
 public Action CmdTrade(int iClient, int iArgs)
@@ -216,7 +226,9 @@ public int mTrade_Handler(Menu menu, MenuAction action, int iClient, int iItem)
 			pData.WriteCell(iClient);
 			pData.WriteString(Client_Target_URL[iClient]);
 			
-			CPrintToChat(iTarget, "{lightseagreen}[Trade] {grey}Opening trade offer in %.1f second(s).", fTimeout);
+			CPrintToChat(iTarget, "--------------------------------------------");
+			CPrintToChat(iTarget, Warning_Message);
+			CPrintToChat(iTarget, "--------------------------------------------");
 			
 			CreateTimer(fTimeout, TradeTimeout, pData);
 
@@ -269,7 +281,7 @@ public Action CmdTradeLink(int iClient, int iArgs)
 		
 		hDB.Escape(TOU, Escaped_TOU, sizeof Escaped_TOU);
 		
-		Format(sQuery, sizeof sQuery, "INSERT INTO `trade_helper` (`steamid`, `url`) VALUES ('%s', '%s') ON DUPLICATE KEY UPDATE `url` = 'https://%s'", sSteamID, Escaped_TOU, Escaped_TOU);
+		Format(sQuery, sizeof sQuery, "INSERT INTO `trade_helper` (`steamid`, `url`) VALUES ('%s', 'https://%s') ON DUPLICATE KEY UPDATE `url` = 'https://%s'", sSteamID, Escaped_TOU, Escaped_TOU);
 		
 		hDB.Query(OnDataUpdated, sQuery, iClient);
 	} else
